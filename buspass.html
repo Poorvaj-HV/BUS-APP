@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Tummoc – Bus Pass</title>
+<style>
+  :root{
+    --teal-50:#eafbfa;
+    --teal-100:#d6f4f1;
+    --teal-400:#2bbfb4;
+    --teal-500:#0fa39a;
+    --teal-600:#0c8d85;
+    --teal-700:#0a6e68;
+    --ink-900:#0c2b2a;
+    --ink-700:#33514f;
+    --ink-500:#5c7977;
+    --ink-300:#9bb0ae;
+    --line:#e4ecea;
+    --paper:#ffffff;
+    --bg:#f4f7f6;
+    --cash:#f08a3c;
+    --radius-lg:20px;
+    --radius-md:14px;
+    --radius-sm:10px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; font-family:var(--font); background:var(--bg); height:100%;}
+
+  body{ min-height:100vh; }
+
+  /* ---------- App shell (no device chrome, fills mobile viewport) ---------- */
+  .app{
+    width:100%;
+    max-width:480px;
+    margin:0 auto;
+    min-height:100vh;
+    background:var(--bg);
+    display:flex; flex-direction:column;
+    position:relative;
+  }
+
+  /* ---------- Status bar ---------- */
+  .statusbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 18px 6px;
+    font-size:13px; font-weight:600; color:var(--ink-900);
+    background:var(--paper);
+  }
+  .statusbar .loc{display:flex; align-items:center; gap:6px; color:var(--ink-700); font-weight:600;}
+  .statusbar .loc svg{width:13px;height:13px;}
+  .statusbar .right{display:flex; align-items:center; gap:8px; color:var(--ink-700);}
+  .statusbar .clock{font-weight:700; color:var(--ink-900);}
+
+  /* ---------- Top nav tabs ---------- */
+  .topnav{
+    display:flex; align-items:center; justify-content:space-around;
+    padding:6px 6px 14px;
+    background:var(--paper);
+    border-bottom:1px solid var(--line);
+  }
+  .topnav .tab{
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    font-size:11px; color:var(--ink-300); font-weight:600;
+    position:relative; cursor:pointer; flex:1; padding:2px 0;
+    background:none; border:none; font-family:var(--font);
+  }
+  .topnav .tab svg{width:22px;height:22px; stroke:var(--ink-300);}
+  .topnav .tab.active{color:var(--teal-600);}
+  .topnav .tab.active svg{stroke:var(--teal-600);}
+  .topnav .tab .badge{
+    position:absolute; top:-8px; right:6px;
+    background:var(--cash); color:#fff; font-size:8px; font-weight:800;
+    padding:1px 5px; border-radius:8px; letter-spacing:.3px;
+  }
+
+  /* ---------- Scroll area ---------- */
+  .screen{
+    flex:1; overflow-y:auto; overflow-x:hidden;
+    background:var(--bg);
+    display:none;
+    flex-direction:column;
+    animation:fadein .25s ease;
+  }
+  .screen.active{display:flex;}
+  @keyframes fadein{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+  /* ---------- Home header ---------- */
+  .hero{
+    background:linear-gradient(135deg, var(--ink-900) 0%, #143c39 55%, var(--teal-700) 100%);
+    padding:18px 18px 46px;
+    color:#fff;
+    position:relative;
+  }
+  .hero-top{display:flex; align-items:center; justify-content:space-between;}
+  .hero-greet{font-size:19px; font-weight:700;}
+  .eco-pill{
+    display:flex; align-items:center; gap:4px;
+    background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.4);
+    color:#9fe8a0; font-weight:800; font-size:12px;
+    padding:5px 10px; border-radius:20px;
+  }
+  .hero-search{
+    margin-top:16px;
+    background:#fff; border-radius:14px;
+    display:flex; align-items:center; gap:10px;
+    padding:13px 14px;
+    box-shadow:0 10px 24px -10px rgba(0,0,0,.35);
+  }
+  .hero-search svg{width:18px;height:18px; stroke:var(--ink-300); flex-shrink:0;}
+  .hero-search input{
+    border:none; outline:none; flex:1; font-size:14px; color:var(--ink-700); font-family:var(--font);
+    background:transparent;
+  }
+  .hero-search .mic{
+    width:26px;height:26px; border-radius:50%; background:var(--teal-50);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .hero-search .mic svg{stroke:var(--teal-600); width:14px;height:14px;}
+
+  /* ---------- Content body ---------- */
+  .body-wrap{ padding:0 16px 28px; margin-top:-26px;}
+
+  .biz-card{
+    background:var(--paper); border-radius:var(--radius-md);
+    padding:14px; display:flex; align-items:center; gap:12px;
+    box-shadow:0 14px 30px -16px rgba(12,43,42,.25);
+    border:1px solid var(--line);
+  }
+  .biz-card .ico{
+    width:38px;height:38px; border-radius:50%; background:var(--teal-50);
+    display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;
+  }
+  .biz-card .txt{flex:1; min-width:0;}
+  .biz-card .txt b{display:block; font-size:13.5px; color:var(--ink-900);}
+  .biz-card .txt span{display:block; font-size:11.5px; color:var(--ink-500); margin-top:1px;}
+  .biz-card .link-btn{
+    background:var(--teal-500); color:#fff; border:none; font-weight:700;
+    font-size:12.5px; padding:8px 14px; border-radius:9px; white-space:nowrap; cursor:pointer;
+  }
+  .biz-card .close-x{
+    background:none; border:none; color:var(--ink-300); font-size:16px; cursor:pointer; padding:0 2px;
+  }
+
+  .section{margin-top:24px;}
+  .section-head{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:12px;
+  }
+  .section-head h3{margin:0; font-size:15px; color:var(--ink-900); font-weight:800;}
+  .section-head a{font-size:12px; color:var(--teal-600); font-weight:700; text-decoration:none;}
+
+  .pill-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px;}
+  .pill{
+    background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-sm);
+    padding:14px 6px 10px; text-align:center; cursor:pointer; position:relative;
+    transition:transform .15s ease;
+  }
+  .pill:active{transform:scale(.95);}
+  .pill .glyph{
+    font-size:22px; margin-bottom:8px; height:24px; display:flex; align-items:center; justify-content:center;
+  }
+  .pill span{font-size:10.5px; color:var(--ink-700); font-weight:700; line-height:1.2; display:block;}
+  .cash-tag{
+    position:absolute; top:-7px; left:50%; transform:translateX(-50%);
+    background:var(--cash); color:#fff; font-size:8.5px; font-weight:800;
+    padding:2px 7px; border-radius:8px;
+  }
+
+  .ticket-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+  .ticket-card{
+    background:var(--teal-50); border:1px solid var(--teal-100); border-radius:var(--radius-sm);
+    padding:14px 8px; text-align:center; cursor:pointer; transition:transform .15s ease;
+  }
+  .ticket-card:active{transform:scale(.95);}
+  .ticket-card .glyph{font-size:24px; margin-bottom:8px;}
+  .ticket-card span{font-size:11px; color:var(--ink-900); font-weight:700; line-height:1.25; display:block;}
+
+  .outstation-banner{
+    margin-top:24px;
+    background:linear-gradient(120deg, #cdeeec, #eaf8f6);
+    border:1px solid var(--teal-100);
+    border-radius:var(--radius-md);
+    padding:16px;
+    display:flex; align-items:center; gap:12px; cursor:pointer;
+  }
+  .outstation-banner .glyph{font-size:26px;}
+  .outstation-banner b{font-size:13.5px; color:var(--ink-900);}
+  .outstation-banner svg{margin-left:auto; width:18px;height:18px; stroke:var(--ink-700); flex-shrink:0;}
+
+  /* ---------- Generic page header (Bookings / Pass detail) ---------- */
+  .pagehead{
+    background:var(--paper); border-bottom:1px solid var(--line);
+    padding:16px 16px; display:flex; align-items:center; gap:12px;
+  }
+  .pagehead.dark{
+    background:linear-gradient(120deg, var(--ink-900), var(--teal-700));
+    color:#fff; border-bottom:none;
+  }
+  .iconbtn{
+    width:34px;height:34px; border-radius:50%; border:none; background:var(--teal-50);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
+  }
+  .pagehead.dark .iconbtn{background:rgba(255,255,255,.15);}
+  .iconbtn svg{width:16px;height:16px; stroke:var(--ink-900);}
+  .pagehead.dark .iconbtn svg{stroke:#fff;}
+  .pagehead h2{margin:0; font-size:16px; font-weight:800; flex:1;}
+  .pagehead .support{font-size:12px; font-weight:700; color:var(--teal-600); text-decoration:none;}
+  .pagehead.dark .support{color:#cdeeec;}
+
+  /* ---------- Bookings screen ---------- */
+  .seg-tabs{display:flex; gap:24px; padding:14px 16px 0; background:var(--paper);}
+  .seg-tab{
+    font-size:14px; font-weight:700; color:var(--ink-300); padding-bottom:12px; cursor:pointer;
+    border-bottom:2.5px solid transparent;
+  }
+  .seg-tab.active{color:var(--teal-600); border-color:var(--teal-600);}
+  .seg-divider{height:1px; background:var(--line);}
+
+  .subfilter{display:flex; gap:10px; padding:14px 16px 4px; background:var(--bg);}
+  .chip{
+    font-size:12px; font-weight:700; padding:7px 16px; border-radius:18px; cursor:pointer;
+    border:1px solid var(--line); color:var(--ink-500); background:var(--paper);
+  }
+  .chip.active{background:var(--teal-50); color:var(--teal-700); border-color:var(--teal-400);}
+
+  .pass-card{
+    margin:16px; border-radius:var(--radius-lg);
+    background:linear-gradient(135deg, var(--ink-900) 0%, var(--teal-700) 100%);
+    color:#fff; padding:18px; cursor:pointer;
+    box-shadow:0 18px 32px -16px rgba(10,110,104,.55);
+    position:relative; overflow:hidden;
+  }
+  .pass-card::after{
+    content:""; position:absolute; right:-30px; top:-30px; width:140px; height:140px;
+    background:radial-gradient(circle, rgba(255,255,255,.12), transparent 70%);
+  }
+  .pass-card .badges{display:flex; gap:8px; margin-bottom:10px;}
+  .pass-card .badge{
+    font-size:10.5px; font-weight:800; padding:4px 10px; border-radius:14px;
+    background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.3);
+  }
+  .pass-card .badge.on{background:#cdeeec; color:var(--ink-900); border-color:transparent;}
+  .pass-card h4{margin:2px 0 14px; font-size:17px; font-weight:800;}
+  .pass-card .row{display:flex; justify-content:space-between; align-items:flex-end;}
+  .pass-card .valid{font-size:11px; opacity:.85;}
+  .pass-card .valid b{display:block; font-size:12.5px; font-weight:700; opacity:1; margin-top:2px;}
+  .pass-card .fare{font-size:18px; font-weight:800; text-align:right;}
+  .pass-card .fare span{display:block; font-size:10px; font-weight:600; opacity:.8;}
+
+  .lookup-row{
+    text-align:center; font-size:12.5px; color:var(--ink-500); margin:18px 16px 4px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .lookup-row::before, .lookup-row::after{content:""; flex:1; height:1px; background:var(--line);}
+
+  .cta-btn{
+    margin:14px 16px 0; background:var(--teal-500); color:#fff; border:none;
+    border-radius:var(--radius-md); padding:15px; font-size:14.5px; font-weight:800;
+    display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;
+  }
+  .cta-btn svg{width:17px;height:17px;}
+
+  .ad-strip{
+    margin:22px 16px 0; background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-md);
+    padding:10px; display:flex; align-items:center; gap:10px;
+  }
+  .ad-strip .logo{
+    width:42px;height:42px; border-radius:10px; background:#facc15;
+    display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;
+  }
+  .ad-strip .txt{flex:1; min-width:0;}
+  .ad-strip .txt b{display:block; font-size:12.5px; color:var(--ink-900);}
+  .ad-strip .txt span{font-size:10px; color:var(--ink-300); background:var(--bg); padding:1px 5px; border-radius:4px;}
+  .ad-strip .install{
+    font-size:11px; font-weight:800; color:var(--teal-600); background:var(--teal-50);
+    padding:7px 12px; border-radius:8px; flex-shrink:0;
+  }
+
+  /* ---------- Pass detail screen ---------- */
+  .detail-hero-card{
+    margin:16px; border-radius:var(--radius-lg);
+    background:var(--paper); border:1px solid var(--line);
+    padding:18px;
+  }
+  .detail-hero-card .top-row{display:flex; justify-content:space-between; align-items:flex-start;}
+  .detail-hero-card .badges{display:flex; gap:8px;}
+  .detail-hero-card .badge{
+    font-size:10.5px; font-weight:800; padding:4px 10px; border-radius:14px;
+  }
+  .detail-hero-card .badge.dim{background:var(--bg); color:var(--ink-500); border:1px solid var(--line);}
+  .detail-hero-card .badge.on{background:#dcf3ef; color:var(--teal-700);}
+  .seal{
+    width:34px;height:34px; border-radius:50%; background:var(--bg); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0;
+  }
+  .detail-hero-card h4{font-size:16.5px; margin:12px 0 2px; color:var(--ink-900); font-weight:800;}
+  .pass-id-row{display:flex; justify-content:space-between; align-items:center; margin-top:10px;}
+  .pass-id-row span{font-size:11.5px; color:var(--ink-500);}
+  .pass-id-row b{font-size:11.5px; color:var(--ink-900); font-weight:700;}
+  .hr{height:1px; background:repeating-linear-gradient(90deg, var(--line) 0 6px, transparent 6px 12px); margin:14px 0;}
+
+  .validate-btn{
+    width:100%; background:var(--teal-500); color:#fff; border:none; border-radius:12px;
+    padding:14px; font-size:14px; font-weight:800; cursor:pointer;
+  }
+  .howto{
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    font-size:12px; color:var(--teal-600); font-weight:700; margin-top:12px; cursor:pointer;
+  }
+  .howto svg{width:13px;height:13px;}
+
+  .booking-block{
+    margin:6px 16px 16px; background:var(--paper); border:1px solid var(--line);
+    border-radius:var(--radius-lg); padding:6px 16px 14px;
+  }
+  .booking-title{font-size:14.5px; font-weight:800; color:var(--ink-900); margin:14px 0 6px;}
+  .b-row{display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px dashed var(--line);}
+  .b-row:last-child{border-bottom:none;}
+  .b-row .lbl{font-size:12px; color:var(--ink-500);}
+  .b-row .val{font-size:12.5px; color:var(--ink-900); font-weight:700; text-align:right;}
+  .avatar-row{display:flex; align-items:center; gap:12px; padding:8px 0 10px; border-bottom:1px dashed var(--line); margin-bottom:2px;}
+  .avatar{
+    width:46px;height:46px; border-radius:50%; background:linear-gradient(135deg,var(--teal-100),var(--teal-50));
+    border:1px solid var(--teal-100); display:flex; align-items:center; justify-content:center;
+    color:var(--teal-600); font-weight:800; font-size:15px; overflow:hidden; flex-shrink:0;
+  }
+  .avatar img{width:100%; height:100%; object-fit:cover;}
+  .avatar-row .meta{flex:1; min-width:0;}
+  .avatar-row .meta .lbl{font-size:11.5px; color:var(--ink-500); display:block;}
+  .avatar-row .meta .val{font-size:14px; color:var(--ink-900); font-weight:800; display:block; margin-top:2px;}
+
+  .qr-card{
+    margin:6px 16px 0; background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-lg);
+    padding:22px; display:flex; flex-direction:column; align-items:center;
+  }
+  .qr-frame{
+    background:#fff; padding:14px; border-radius:14px; border:1px solid var(--line);
+    box-shadow:0 8px 20px -10px rgba(12,43,42,.18);
+  }
+  .qr-wrap{position:relative; width:196px; height:196px;}
+  #qrCanvas{width:196px; height:196px; display:block; image-rendering:pixelated;}
+  .qr-seal{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:34px;height:34px; border-radius:50%; background:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:16px;
+    box-shadow:0 0 0 4px #fff, 0 2px 6px rgba(0,0,0,.15);
+  }
+  .qr-refresh-note{
+    margin-top:14px; font-size:10.5px; color:var(--ink-300); display:flex; align-items:center; gap:6px;
+  }
+  .qr-refresh-note .dot{
+    width:6px;height:6px; border-radius:50%; background:var(--teal-500); animation:pulse 1.4s infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:.35;} 50%{opacity:1;}}
+  .mail-btn{
+    margin-top:16px; border:1px solid var(--teal-400); color:var(--teal-600); background:#fff;
+    border-radius:10px; padding:10px 18px; font-size:12.5px; font-weight:700; cursor:pointer;
+    display:flex; align-items:center; gap:7px;
+  }
+
+  /* ---------- Bottom nav ---------- */
+  .bottomnav{
+    display:flex; background:var(--paper); border-top:1px solid var(--line);
+    padding:8px 4px 10px; flex-shrink:0;
+  }
+  .bnav-item{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+    font-size:10px; font-weight:700; color:var(--ink-300); cursor:pointer; background:none; border:none; font-family:var(--font);
+  }
+  .bnav-item svg{width:20px;height:20px; stroke:var(--ink-300);}
+  .bnav-item.active{color:var(--teal-600);}
+  .bnav-item.active svg{stroke:var(--teal-600);}
+
+  .toast{
+    position:fixed; bottom:90px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--ink-900); color:#fff; font-size:12.5px; font-weight:600;
+    padding:10px 18px; border-radius:24px; opacity:0; pointer-events:none; transition:all .25s ease;
+    white-space:nowrap; z-index:80; box-shadow:0 10px 24px -8px rgba(0,0,0,.4);
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  .credit{
+    text-align:center; font-size:10.5px; color:#7d908d; margin-top:18px; letter-spacing:.2px;
+  }
+
+  @media (min-width:481px){
+    body{ background:#dfe7e6; padding:24px 0; }
+    .app{ box-shadow:0 30px 60px -20px rgba(0,0,0,.25); border-radius:18px; overflow:hidden; min-height:auto; max-height:844px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- STATUS BAR -->
+  <div class="statusbar">
+    <div class="loc">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 21s7-7.5 7-12a7 7 0 1 0-14 0c0 4.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.3"/></svg>
+      Bengaluru <span style="opacity:.6; font-weight:500;">23.8°C</span>
+    </div>
+    <div class="right">
+      <span class="clock" id="clockTime">12:05</span>
+    </div>
+  </div>
+
+  <!-- TOP NAV TABS -->
+  <div class="topnav">
+    <button class="tab" data-go="home" id="navHome">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+      Home
+    </button>
+    <button class="tab" data-go="home">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M8 6V4h8v2"/></svg>
+      Tummoc Money
+    </button>
+    <button class="tab" data-go="bookings" id="navBookings">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 7.3 12 12 3.5 7.3M12 22V12M20.5 16.7 12 12l-8.5 4.7"/></svg>
+      Bookings
+    </button>
+    <button class="tab" data-go="home">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+      Personal
+      <span class="badge">New</span>
+    </button>
+  </div>
+
+  <!-- =========================================================
+       HOME SCREEN
+  ========================================================== -->
+  <div class="screen active" id="screen-home">
+
+    <div class="hero">
+      <div class="hero-top">
+        <div class="hero-greet">Good Evening Kushal</div>
+        <div class="eco-pill">🍃 0 g</div>
+      </div>
+      <div class="hero-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" placeholder="Search destination" />
+        <div class="mic">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="body-wrap">
+
+      <div class="biz-card">
+        <div class="ico">🦉</div>
+        <div class="txt">
+          <b>Business Profile</b>
+          <span>Link profile for work use</span>
+        </div>
+        <button class="link-btn">Link Now</button>
+        <button class="close-x">✕</button>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><h3>Passes &amp; Tickets</h3></div>
+        <div class="ticket-grid">
+          <div class="ticket-card" data-go="bookings">
+            <div class="glyph">🎫</div>
+            <span>BMTC Pass</span>
+          </div>
+          <div class="ticket-card">
+            <div class="glyph">🚇</div>
+            <span>Metro Ticket</span>
+          </div>
+          <div class="ticket-card">
+            <div class="glyph">🎟️</div>
+            <span>All-in-One Ticket</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><h3>Commute options available</h3></div>
+        <div class="pill-grid">
+          <div class="pill">
+            <div class="glyph">🚌</div>
+            <span>Bus</span>
+          </div>
+          <div class="pill">
+            <div class="glyph">🚇</div>
+            <span>Metro</span>
+          </div>
+          <div class="pill">
+            <span class="cash-tag">Cash</span>
+            <div class="glyph">🛺</div>
+            <span>Direct Ride</span>
+          </div>
+          <div class="pill">
+            <div class="glyph">🚈</div>
+            <span>Airport Rail</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="outstation-banner">
+        <div class="glyph">🚍</div>
+        <div>
+          <b>Travel Outstation</b><br>
+          <span style="font-size:11.5px; color:var(--ink-500);">Book outstation bus tickets</span>
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+
+      <div class="credit">Frontend recreation · no backend</div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       BOOKINGS SCREEN
+  ========================================================== -->
+  <div class="screen" id="screen-bookings">
+    <div class="pagehead">
+      <button class="iconbtn" data-go="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <h2>Bookings</h2>
+    </div>
+
+    <div class="seg-tabs">
+      <div class="seg-tab active" data-tab="passes">Passes</div>
+      <div class="seg-tab" data-tab="trips">Trips/Tickets</div>
+    </div>
+    <div class="seg-divider"></div>
+
+    <div class="subfilter">
+      <div class="chip active" data-filter="active">Active</div>
+      <div class="chip" data-filter="expired">Expired</div>
+    </div>
+
+    <div id="passListActive">
+      <div class="pass-card" data-go="passdetail">
+        <div class="badges">
+          <span class="badge on">Ordinary</span>
+          <span class="badge">Monthly</span>
+        </div>
+        <h4>Ordinary Service Monthly Pass</h4>
+        <div class="row">
+          <div class="valid">Pass valid till<b>16 Jul 2026, 11:59 PM</b></div>
+          <div class="fare">₹ 1200.0<span>Pass fare</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="passListEmpty" style="display:none; text-align:center; padding:50px 30px; color:var(--ink-300); font-size:13px;">
+      No expired passes to show.
+    </div>
+
+    <div class="lookup-row">Looking for pass purchase?</div>
+    <button class="cta-btn" data-go="home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+      Book a new pass
+    </button>
+
+    <div class="ad-strip">
+      <div class="logo">📦</div>
+      <div class="txt">
+        <b>Blinkit Delivery Partner</b><br>
+        <span>Ad</span>
+      </div>
+      <div class="install">INSTALL</div>
+    </div>
+
+    <div class="credit">Frontend recreation · no backend</div>
+  </div>
+
+  <!-- =========================================================
+       PASS DETAIL SCREEN  (Booking Details first, QR at the end)
+  ========================================================== -->
+  <div class="screen" id="screen-passdetail">
+    <div class="pagehead dark">
+      <button class="iconbtn" data-go="bookings">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <h2>Your Bus Pass</h2>
+      <a class="support" href="#">Support</a>
+    </div>
+
+    <div class="detail-hero-card">
+      <div class="top-row">
+        <div class="badges">
+          <span class="badge on">Monthly</span>
+          <span class="badge dim">Ordinary</span>
+        </div>
+        <div class="seal">🛡️</div>
+      </div>
+      <h4>Ordinary Service Monthly Pass</h4>
+      <div class="hr"></div>
+      <div class="pass-id-row">
+        <span>Pass ID:</span>
+        <b>TPASS474477198</b>
+      </div>
+      <div style="margin-top:16px;">
+        <button class="validate-btn" id="validateBtn">Validate Pass</button>
+        <div class="howto">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+          How to Validate Your Pass?
+        </div>
+      </div>
+    </div>
+
+    <!-- Booking Details now appears first -->
+    <div class="booking-block">
+      <div class="booking-title">Booking Details</div>
+
+      <div class="avatar-row">
+        <div class="avatar"><!-- empty: passenger photo placeholder --><img src="" alt="" onerror="this.style.display='none'"></div>
+        <div class="meta">
+          <span class="lbl">Passenger name</span>
+          <span class="val">Kushal MJ</span>
+        </div>
+      </div>
+
+      <div class="b-row"><span class="lbl">Identification type</span><span class="val">Aadhar Card</span></div>
+      <div class="b-row"><span class="lbl">Identification number (Last 4 digits)</span><span class="val">7710</span></div>
+      <div class="b-row"><span class="lbl">Pass purchase date</span><span class="val">17 Jun 2026, 08:15 AM</span></div>
+      <div class="b-row"><span class="lbl">Pass valid from</span><span class="val">17 Jun 2026, 12:00 AM</span></div>
+      <div class="b-row"><span class="lbl">Pass valid till</span><span class="val">16 Jul 2026, 11:59 PM</span></div>
+      <div class="b-row"><span class="lbl">Pass fare</span><span class="val">₹ 1200.0</span></div>
+    </div>
+
+    <!-- QR now appears at the bottom -->
+    <div class="qr-card">
+      <div class="qr-frame">
+        <div class="qr-wrap">
+          <canvas id="qrCanvas"></canvas>
+          <div class="qr-seal">🛡️</div>
+        </div>
+      </div>
+      <div class="qr-refresh-note"><span class="dot"></span> QR refreshes automatically for security</div>
+      <button class="mail-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+        Generate mail receipt
+      </button>
+    </div>
+
+    <div class="credit">Frontend recreation · no backend</div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottomnav" id="bottomNav">
+    <button class="bnav-item active" data-go="home">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+      Home
+    </button>
+    <button class="bnav-item" data-go="bookings">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      Plan
+    </button>
+    <button class="bnav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+      Saved
+    </button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+(function(){
+  // ---------- Navigation ----------
+  const screens = document.querySelectorAll('.screen');
+  function goTo(id){
+    screens.forEach(s => s.classList.toggle('active', s.id === 'screen-' + id));
+    document.getElementById('navHome').classList.toggle('active', id==='home');
+    document.getElementById('navBookings').classList.toggle('active', id==='bookings');
+    document.querySelectorAll('.bnav-item').forEach(b=>{
+      b.classList.toggle('active', b.dataset.go === id);
+    });
+    document.getElementById('bottomNav').style.display = (id === 'home') ? 'flex' : 'none';
+    document.querySelector('.screen.active').scrollTop = 0;
+    if(id === 'passdetail') startQR();
+    else stopQR();
+  }
+  document.querySelectorAll('[data-go]').forEach(el=>{
+    el.addEventListener('click', ()=> goTo(el.dataset.go));
+  });
+  document.getElementById('bottomNav').style.display = 'flex';
+
+  // ---------- Bookings sub-tabs ----------
+  document.querySelectorAll('.seg-tab').forEach(t=>{
+    t.addEventListener('click', ()=>{
+      document.querySelectorAll('.seg-tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+    });
+  });
+  document.querySelectorAll('.chip').forEach(c=>{
+    c.addEventListener('click', ()=>{
+      document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
+      c.classList.add('active');
+      const isActive = c.dataset.filter === 'active';
+      document.getElementById('passListActive').style.display = isActive ? 'block' : 'none';
+      document.getElementById('passListEmpty').style.display = isActive ? 'none' : 'block';
+    });
+  });
+
+  // ---------- Validate pass toast ----------
+  document.getElementById('validateBtn').addEventListener('click', ()=>{
+    const t = document.getElementById('toast');
+    t.textContent = '✓ Pass validated successfully';
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 2200);
+    regenerateQR();
+  });
+
+  // ---------- Live clock ----------
+  function tick(){
+    const d = new Date();
+    let h = d.getHours(), m = d.getMinutes();
+    h = h % 12; if(h===0) h = 12;
+    document.getElementById('clockTime').textContent =
+      h + ':' + String(m).padStart(2,'0');
+  }
+  tick(); setInterval(tick, 30000);
+
+  // ---------- Precise, real-looking auto-refreshing QR code ----------
+  const canvas = document.getElementById('qrCanvas');
+  const ctx = canvas.getContext('2d');
+  const GRID = 29;                 // QR-version-like module count
+  const DPR = Math.min(window.devicePixelRatio || 1, 3);
+  const CSS_SIZE = 196;
+  canvas.width = CSS_SIZE * DPR;
+  canvas.height = CSS_SIZE * DPR;
+  ctx.scale(DPR, DPR);
+  const cell = CSS_SIZE / GRID;
+  let qrTimer = null;
+
+  function drawFinder(gx, gy){
+    ctx.fillStyle = '#111315';
+    ctx.fillRect(gx*cell, gy*cell, cell*7, cell*7);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect((gx+1)*cell, (gy+1)*cell, cell*5, cell*5);
+    ctx.fillStyle = '#111315';
+    ctx.fillRect((gx+2)*cell, (gy+2)*cell, cell*3, cell*3);
+  }
+
+  function drawAlignment(gx, gy){
+    ctx.fillStyle = '#111315';
+    ctx.fillRect(gx*cell, gy*cell, cell*5, cell*5);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect((gx+1)*cell, (gy+1)*cell, cell*3, cell*3);
+    ctx.fillStyle = '#111315';
+    ctx.fillRect((gx+2)*cell, (gy+2)*cell, cell, cell);
+  }
+
+  function regenerateQR(){
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0,0,CSS_SIZE,CSS_SIZE);
+    ctx.fillStyle = '#111315';
+
+    const cx = (GRID-1)/2, cy = (GRID-1)/2;
+
+    for(let y=0;y<GRID;y++){
+      for(let x=0;x<GRID;x++){
+        const inFinderTL = x<8 && y<8;
+        const inFinderTR = x>GRID-9 && y<8;
+        const inFinderBL = x<8 && y>GRID-9;
+        const inAlign = x>=GRID-10 && x<=GRID-6 && y>=GRID-10 && y<=GRID-6;
+        const onTiming = (y===6 || x===6);
+        const inCenterLogo = Math.abs(x-cx) < 4.4 && Math.abs(y-cy) < 4.4;
+
+        if(inFinderTL || inFinderTR || inFinderBL || inAlign || inCenterLogo) continue;
+
+        if(onTiming){
+          if(x%2===0) ctx.fillRect(x*cell, y*cell, cell, cell);
+          continue;
+        }
+
+        // deterministic-ish noise for a dense, authentic data-module look
+        if(Math.random() > 0.52){
+          ctx.fillRect(x*cell, y*cell, cell, cell);
+        }
+      }
+    }
+
+    drawFinder(0,0);
+    drawFinder(GRID-7,0);
+    drawFinder(0,GRID-7);
+    drawAlignment(GRID-9,GRID-9);
+
+    // quiet-zone ring around the center logo so the seal sits cleanly
+    ctx.fillStyle = '#fff';
+    const r = cell*4.6;
+    ctx.beginPath();
+    ctx.arc(cx*cell+cell/2, cy*cell+cell/2, r, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  function startQR(){
+    regenerateQR();
+    if(qrTimer) clearInterval(qrTimer);
+    qrTimer = setInterval(regenerateQR, 4000);
+  }
+  function stopQR(){
+    if(qrTimer){ clearInterval(qrTimer); qrTimer = null; }
+  }
+})();
+</script>
+
+</body>
+</html>
