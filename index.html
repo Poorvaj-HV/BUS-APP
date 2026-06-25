@@ -744,7 +744,7 @@
     document.getElementById('clockTime').textContent =
       h + ':' + String(m).padStart(2,'0');
   }
-  tick(); setInterval(tick, 30000);
+  tick(); setInterval(tick, 1000);
 
   // ---------- High-fidelity auto-refreshing QR code ----------
   const canvas = document.getElementById('qrCanvas');
@@ -796,7 +796,7 @@
   }
 
   function regenerateQR(){
-    _seed = Date.now() & 0xffff;
+     _seed = Math.floor(Date.now() / 1000) & 0xffff;
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, CSS_SIZE, CSS_SIZE);
     ctx.fillStyle = '#0d1117';
@@ -877,7 +877,7 @@
     logoImg.onload = regenerateQR;
     regenerateQR();
     if(qrTimer) clearInterval(qrTimer);
-    qrTimer = setInterval(regenerateQR, 4000);
+    qrTimer = setInterval(regenerateQR, 1000);
   }
   function stopQR(){
     if(qrTimer){ clearInterval(qrTimer); qrTimer=null; }
