@@ -877,7 +877,7 @@
     logoImg.onload = regenerateQR;
     regenerateQR();
     if(qrTimer) clearInterval(qrTimer);
-    qrTimer = setInterval(regenerateQR, 500);
+    qrTimer = setInterval(regenerateQR, 250);
   }
   function stopQR(){
     if(qrTimer){ clearInterval(qrTimer); qrTimer=null; }
