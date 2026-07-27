@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Tummoc – Bus Pass</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
 <style>
   :root{
     --teal-50:#eafbfa;
@@ -388,6 +389,47 @@
     text-align:center; font-size:10.5px; color:#7d908d; margin-top:18px; letter-spacing:.2px;
   }
 
+  /* ---------- QR Scan modal (camera) ---------- */
+  .scan-modal{
+    position:fixed; inset:0; background:#000; z-index:200;
+    display:none; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .scan-modal.show{display:flex;}
+  .scan-modal video{
+    width:100%; height:100%; object-fit:cover; position:absolute; inset:0;
+  }
+  .scan-modal .scan-topbar{
+    position:absolute; top:0; left:0; right:0; z-index:2;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 18px; background:linear-gradient(180deg, rgba(0,0,0,.6), transparent);
+  }
+  .scan-modal .scan-topbar span{color:#fff; font-weight:800; font-size:14px;}
+  .scan-modal .scan-close{
+    width:34px; height:34px; border-radius:50%; border:none;
+    background:rgba(255,255,255,.18); color:#fff; font-size:16px; cursor:pointer;
+  }
+  .scan-frame{
+    position:relative; z-index:1;
+    width:230px; height:230px; border-radius:18px;
+    box-shadow:0 0 0 2000px rgba(0,0,0,.45);
+    border:2px solid rgba(255,255,255,.9);
+  }
+  .scan-frame::before{
+    content:""; position:absolute; left:0; right:0; top:0; height:2px;
+    background:var(--teal-400); box-shadow:0 0 8px var(--teal-400);
+    animation:scanline 1.8s ease-in-out infinite;
+  }
+  @keyframes scanline{0%{top:0;} 50%{top:100%;} 100%{top:0;}}
+  .scan-hint{
+    position:absolute; bottom:70px; z-index:2; color:#fff; font-size:12.5px;
+    background:rgba(0,0,0,.45); padding:8px 16px; border-radius:20px;
+  }
+  .scan-status{
+    position:absolute; bottom:0; left:0; right:0; z-index:2;
+    color:#fff; font-size:12px; text-align:center; padding:14px;
+    background:linear-gradient(0deg, rgba(0,0,0,.6), transparent);
+  }
+
   @media (min-width:481px){
     body{ background:#dfe7e6; padding:24px 0; }
     .app{ box-shadow:0 30px 60px -20px rgba(0,0,0,.25); border-radius:18px; overflow:hidden; min-height:auto; max-height:844px; }
@@ -675,6 +717,17 @@
       Personal
     </button>
   </div>
+
+  <div class="scan-modal" id="scanModal">
+  <video id="scanVideo" autoplay playsinline muted></video>
+  <div class="scan-topbar">
+    <span>Scan to Validate Pass</span>
+    <button class="scan-close" id="scanCloseBtn">✕</button>
+  </div>
+  <div class="scan-frame"></div>
+  <div class="scan-hint">Point your camera at any QR code</div>
+  <div class="scan-status" id="scanStatus"></div>
+</div>
 
   <div class="toast" id="toast"></div>
 </div>
